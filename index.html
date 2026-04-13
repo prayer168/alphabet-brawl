@@ -121,135 +121,135 @@ class AudioManager {
 //  LETTER CONFIGS  (26 letters × unique stats + skills)
 // ══════════════════════════════════════════════════════
 const LC = {
-  A:{ color:0xFF4455, hp:900,  spd:155, skills:[
-    {name:'角刺突进', type:'charge',     dmg:42, rng:190, cd:3500, snd:'swoosh'},
-    {name:'三角斩击', type:'slash',      dmg:28, rng:110, cd:1800, snd:'hit'},
-    {name:'地裂震波', type:'aoe',        dmg:88, rng:280, cd:9000, snd:'explosion'},
+  A:{ color:0xFF4455, hp:1800, spd:132, skills:[
+    {name:'角刺突進', type:'charge',     dmg:23, rng:190, cd:5600, snd:'swoosh'},
+    {name:'三角斬擊', type:'slash',      dmg:15, rng:110, cd:2900, snd:'hit'},
+    {name:'地裂震波', type:'aoe',        dmg:48, rng:280, cd:14400,snd:'explosion'},
   ]},
-  B:{ color:0xFF8C00, hp:1100, spd:118, skills:[
-    {name:'滚体压碎', type:'charge',     dmg:52, rng:200, cd:4000, snd:'explosion'},
-    {name:'双泡炸弹', type:'projectile', dmg:33, rng:300, cd:2500, snd:'hit'},
-    {name:'大地震',   type:'aoe',        dmg:105,rng:260, cd:10000,snd:'explosion'},
+  B:{ color:0xFF8C00, hp:2200, spd:100, skills:[
+    {name:'滾體壓碎', type:'charge',     dmg:29, rng:200, cd:6400, snd:'explosion'},
+    {name:'雙泡炸彈', type:'projectile', dmg:18, rng:300, cd:4000, snd:'hit'},
+    {name:'大地震',   type:'aoe',        dmg:58, rng:260, cd:16000,snd:'explosion'},
   ]},
-  C:{ color:0xFFD700, hp:820,  spd:178, skills:[
-    {name:'月牙飞刃', type:'projectile', dmg:38, rng:320, cd:2500, snd:'swoosh'},
-    {name:'包抄斩',   type:'slash',      dmg:32, rng:130, cd:2000, snd:'hit'},
-    {name:'音波冲击', type:'aoe',        dmg:82, rng:265, cd:8500, snd:'explosion'},
+  C:{ color:0xFFD700, hp:1640, spd:151, skills:[
+    {name:'月牙飛刃', type:'projectile', dmg:21, rng:320, cd:4000, snd:'swoosh'},
+    {name:'包抄斬',   type:'slash',      dmg:18, rng:130, cd:3200, snd:'hit'},
+    {name:'音波衝擊', type:'aoe',        dmg:45, rng:265, cd:13600,snd:'explosion'},
   ]},
-  D:{ color:0x7CFC00, hp:1000, spd:138, skills:[
-    {name:'弓箭连射', type:'projectile', dmg:28, rng:350, cd:2000, snd:'swoosh'},
-    {name:'盾牌反弹', type:'slash',      dmg:48, rng:105, cd:3000, snd:'hit'},
-    {name:'半月箭雨', type:'aoe',        dmg:90, rng:270, cd:9000, snd:'swoosh'},
+  D:{ color:0x7CFC00, hp:2000, spd:117, skills:[
+    {name:'弓箭連射', type:'projectile', dmg:15, rng:350, cd:3200, snd:'swoosh'},
+    {name:'盾牌反彈', type:'slash',      dmg:26, rng:105, cd:4800, snd:'hit'},
+    {name:'半月箭雨', type:'aoe',        dmg:50, rng:270, cd:14400,snd:'swoosh'},
   ]},
-  E:{ color:0x00CED1, hp:870,  spd:162, skills:[
-    {name:'三排连电', type:'lightning',  dmg:38, rng:220, cd:2500, snd:'lightning'},
-    {name:'梳形斩',   type:'slash',      dmg:28, rng:120, cd:1800, snd:'hit'},
-    {name:'电磁脉冲', type:'aoe',        dmg:95, rng:290, cd:9500, snd:'lightning'},
+  E:{ color:0x00CED1, hp:1740, spd:138, skills:[
+    {name:'三排連電', type:'lightning',  dmg:21, rng:220, cd:4000, snd:'lightning'},
+    {name:'梳形斬',   type:'slash',      dmg:15, rng:120, cd:2900, snd:'hit'},
+    {name:'電磁脈衝', type:'aoe',        dmg:52, rng:290, cd:15200,snd:'lightning'},
   ]},
-  F:{ color:0xFF6347, hp:800,  spd:182, skills:[
-    {name:'喷火',     type:'projectile', dmg:32, rng:250, cd:2000, snd:'explosion'},
-    {name:'旗杆横扫', type:'slash',      dmg:42, rng:140, cd:2500, snd:'swoosh'},
-    {name:'龙卷焰',   type:'aoe',        dmg:102,rng:270, cd:10000,snd:'explosion'},
+  F:{ color:0xFF6347, hp:1600, spd:155, skills:[
+    {name:'噴火',     type:'projectile', dmg:18, rng:250, cd:3200, snd:'explosion'},
+    {name:'旗杆橫掃', type:'slash',      dmg:23, rng:140, cd:4000, snd:'swoosh'},
+    {name:'龍卷焰',   type:'aoe',        dmg:56, rng:270, cd:16000,snd:'explosion'},
   ]},
-  G:{ color:0xADFF2F, hp:950,  spd:145, skills:[
-    {name:'钩爪抓取', type:'charge',     dmg:48, rng:200, cd:3500, snd:'swoosh'},
-    {name:'螺旋冲',   type:'charge',     dmg:38, rng:180, cd:3000, snd:'swoosh'},
-    {name:'吸血吸收', type:'slash',      dmg:82, rng:155, cd:8000, snd:'hit'},
+  G:{ color:0xADFF2F, hp:1900, spd:123, skills:[
+    {name:'鉤爪抓取', type:'charge',     dmg:26, rng:200, cd:5600, snd:'swoosh'},
+    {name:'螺旋衝',   type:'charge',     dmg:21, rng:180, cd:4800, snd:'swoosh'},
+    {name:'吸血吸收', type:'slash',      dmg:45, rng:155, cd:12800,snd:'hit'},
   ]},
-  H:{ color:0x9370DB, hp:1050, spd:132, skills:[
-    {name:'双柱夹击', type:'slash',      dmg:48, rng:132, cd:3000, snd:'hit'},
-    {name:'梯形踩踏', type:'aoe',        dmg:42, rng:185, cd:4000, snd:'explosion'},
-    {name:'稳步重拳', type:'charge',     dmg:105,rng:155, cd:9000, snd:'explosion'},
+  H:{ color:0x9370DB, hp:2100, spd:112, skills:[
+    {name:'雙柱夾擊', type:'slash',      dmg:26, rng:132, cd:4800, snd:'hit'},
+    {name:'梯形踩踏', type:'aoe',        dmg:23, rng:185, cd:6400, snd:'explosion'},
+    {name:'穩步重拳', type:'charge',     dmg:58, rng:155, cd:14400,snd:'explosion'},
   ]},
-  I:{ color:0x00BFFF, hp:750,  spd:192, skills:[
-    {name:'直线穿刺', type:'charge',     dmg:38, rng:220, cd:2000, snd:'swoosh'},
-    {name:'闪电落雷', type:'lightning',  dmg:48, rng:205, cd:3000, snd:'lightning'},
-    {name:'分裂光束', type:'aoe',        dmg:88, rng:300, cd:9000, snd:'lightning'},
+  I:{ color:0x00BFFF, hp:1500, spd:163, skills:[
+    {name:'直線穿刺', type:'charge',     dmg:21, rng:220, cd:3200, snd:'swoosh'},
+    {name:'閃電落雷', type:'lightning',  dmg:26, rng:205, cd:4800, snd:'lightning'},
+    {name:'分裂光束', type:'aoe',        dmg:48, rng:300, cd:14400,snd:'lightning'},
   ]},
-  J:{ color:0xFF69B4, hp:830,  spd:172, skills:[
-    {name:'钩形投掷', type:'projectile', dmg:42, rng:285, cd:2500, snd:'swoosh'},
-    {name:'鞭打连击', type:'slash',      dmg:28, rng:155, cd:1800, snd:'hit'},
-    {name:'回旋踢',   type:'aoe',        dmg:92, rng:205, cd:8500, snd:'swoosh'},
+  J:{ color:0xFF69B4, hp:1660, spd:146, skills:[
+    {name:'鉤形投擲', type:'projectile', dmg:23, rng:285, cd:4000, snd:'swoosh'},
+    {name:'鞭打連擊', type:'slash',      dmg:15, rng:155, cd:2900, snd:'hit'},
+    {name:'回旋踢',   type:'aoe',        dmg:51, rng:205, cd:13600,snd:'swoosh'},
   ]},
-  K:{ color:0xFFA500, hp:880,  spd:178, skills:[
-    {name:'斜刃斩',   type:'slash',      dmg:42, rng:132, cd:2000, snd:'hit'},
-    {name:'忍者飞镖', type:'projectile', dmg:32, rng:305, cd:2000, snd:'swoosh'},
-    {name:'反踢弹射', type:'charge',     dmg:98, rng:165, cd:8000, snd:'swoosh'},
+  K:{ color:0xFFA500, hp:1760, spd:151, skills:[
+    {name:'斜刃斬',   type:'slash',      dmg:23, rng:132, cd:3200, snd:'hit'},
+    {name:'忍者飛鏢', type:'projectile', dmg:18, rng:305, cd:3200, snd:'swoosh'},
+    {name:'反踢彈射', type:'charge',     dmg:54, rng:165, cd:12800,snd:'swoosh'},
   ]},
-  L:{ color:0x32CD32, hp:980,  spd:142, skills:[
-    {name:'地板震击', type:'aoe',        dmg:52, rng:205, cd:3500, snd:'explosion'},
-    {name:'直角切割', type:'slash',      dmg:38, rng:122, cd:2000, snd:'hit'},
-    {name:'横扫地面', type:'charge',     dmg:98, rng:285, cd:9000, snd:'swoosh'},
+  L:{ color:0x32CD32, hp:1960, spd:121, skills:[
+    {name:'地板震擊', type:'aoe',        dmg:29, rng:205, cd:5600, snd:'explosion'},
+    {name:'直角切割', type:'slash',      dmg:21, rng:122, cd:3200, snd:'hit'},
+    {name:'橫掃地面', type:'charge',     dmg:54, rng:285, cd:14400,snd:'swoosh'},
   ]},
-  M:{ color:0xDC143C, hp:1050, spd:128, skills:[
-    {name:'双峰重击', type:'slash',      dmg:52, rng:142, cd:3000, snd:'hit'},
-    {name:'山崩碎石', type:'aoe',        dmg:68, rng:265, cd:5000, snd:'explosion'},
-    {name:'地底爆破', type:'aoe',        dmg:115,rng:305, cd:10000,snd:'explosion'},
+  M:{ color:0xDC143C, hp:2100, spd:109, skills:[
+    {name:'雙峰重擊', type:'slash',      dmg:29, rng:142, cd:4800, snd:'hit'},
+    {name:'山崩碎石', type:'aoe',        dmg:37, rng:265, cd:8000, snd:'explosion'},
+    {name:'地底爆破', type:'aoe',        dmg:63, rng:305, cd:16000,snd:'explosion'},
   ]},
-  N:{ color:0x1E90FF, hp:850,  spd:165, skills:[
-    {name:'折线闪电', type:'lightning',  dmg:42, rng:245, cd:2500, snd:'lightning'},
-    {name:'对角冲刺', type:'charge',     dmg:38, rng:205, cd:2500, snd:'swoosh'},
-    {name:'N形震波',  type:'aoe',        dmg:92, rng:272, cd:9000, snd:'explosion'},
+  N:{ color:0x1E90FF, hp:1700, spd:140, skills:[
+    {name:'折線閃電', type:'lightning',  dmg:23, rng:245, cd:4000, snd:'lightning'},
+    {name:'對角衝刺', type:'charge',     dmg:21, rng:205, cd:4000, snd:'swoosh'},
+    {name:'N形震波',  type:'aoe',        dmg:51, rng:272, cd:14400,snd:'explosion'},
   ]},
-  O:{ color:0xFF8C00, hp:900,  spd:155, skills:[
-    {name:'圆圈旋风', type:'aoe',        dmg:48, rng:165, cd:3000, snd:'swoosh'},
-    {name:'滚动压碎', type:'charge',     dmg:42, rng:205, cd:3000, snd:'explosion'},
-    {name:'魔法圆阵', type:'aoe',        dmg:102,rng:305, cd:10000,snd:'lightning'},
+  O:{ color:0xFF8C00, hp:1800, spd:132, skills:[
+    {name:'圓圈旋風', type:'aoe',        dmg:26, rng:165, cd:4800, snd:'swoosh'},
+    {name:'滾動壓碎', type:'charge',     dmg:23, rng:205, cd:4800, snd:'explosion'},
+    {name:'魔法圓陣', type:'aoe',        dmg:56, rng:305, cd:16000,snd:'lightning'},
   ]},
-  P:{ color:0xFF1493, hp:840,  spd:165, skills:[
-    {name:'炸弹投掷', type:'projectile', dmg:48, rng:285, cd:3000, snd:'explosion'},
-    {name:'气泡爆炸', type:'aoe',        dmg:38, rng:185, cd:2500, snd:'explosion'},
-    {name:'头槌冲',   type:'charge',     dmg:88, rng:175, cd:8000, snd:'hit'},
+  P:{ color:0xFF1493, hp:1680, spd:140, skills:[
+    {name:'炸彈投擲', type:'projectile', dmg:26, rng:285, cd:4800, snd:'explosion'},
+    {name:'氣泡爆炸', type:'aoe',        dmg:21, rng:185, cd:4000, snd:'explosion'},
+    {name:'頭槌衝',   type:'charge',     dmg:48, rng:175, cd:12800,snd:'hit'},
   ]},
-  Q:{ color:0xDEB887, hp:920,  spd:150, skills:[
-    {name:'圆圈魔法', type:'aoe',        dmg:52, rng:205, cd:3500, snd:'lightning'},
-    {name:'尾巴鞭打', type:'slash',      dmg:38, rng:155, cd:2000, snd:'hit'},
-    {name:'问号诅咒', type:'aoe',        dmg:102,rng:265, cd:9500, snd:'lightning'},
+  Q:{ color:0xDEB887, hp:1840, spd:128, skills:[
+    {name:'圓圈魔法', type:'aoe',        dmg:29, rng:205, cd:5600, snd:'lightning'},
+    {name:'尾巴鞭打', type:'slash',      dmg:21, rng:155, cd:3200, snd:'hit'},
+    {name:'問號詛咒', type:'aoe',        dmg:56, rng:265, cd:15200,snd:'lightning'},
   ]},
-  R:{ color:0xFF4500, hp:870,  spd:172, skills:[
-    {name:'腿部横扫', type:'slash',      dmg:38, rng:132, cd:2000, snd:'hit'},
-    {name:'回旋肘击', type:'charge',     dmg:48, rng:162, cd:3000, snd:'hit'},
-    {name:'摇滚冲撞', type:'aoe',        dmg:92, rng:245, cd:8500, snd:'explosion'},
+  R:{ color:0xFF4500, hp:1740, spd:146, skills:[
+    {name:'腿部橫掃', type:'slash',      dmg:21, rng:132, cd:3200, snd:'hit'},
+    {name:'回旋肘擊', type:'charge',     dmg:26, rng:162, cd:4800, snd:'hit'},
+    {name:'搖滾衝撞', type:'aoe',        dmg:51, rng:245, cd:13600,snd:'explosion'},
   ]},
-  S:{ color:0x00FA9A, hp:810,  spd:182, skills:[
-    {name:'蛇形咬击', type:'slash',      dmg:32, rng:122, cd:1800, snd:'hit'},
-    {name:'螺旋冲刺', type:'charge',     dmg:48, rng:205, cd:3000, snd:'swoosh'},
-    {name:'毒液喷射', type:'projectile', dmg:88, rng:285, cd:8000, snd:'swoosh'},
+  S:{ color:0x00FA9A, hp:1620, spd:155, skills:[
+    {name:'蛇形咬擊', type:'slash',      dmg:18, rng:122, cd:2900, snd:'hit'},
+    {name:'螺旋衝刺', type:'charge',     dmg:26, rng:205, cd:4800, snd:'swoosh'},
+    {name:'毒液噴射', type:'projectile', dmg:48, rng:285, cd:12800,snd:'swoosh'},
   ]},
-  T:{ color:0xFFD700, hp:960,  spd:145, skills:[
-    {name:'十字斩',   type:'slash',      dmg:48, rng:142, cd:2500, snd:'hit'},
-    {name:'雷霆下压', type:'lightning',  dmg:52, rng:205, cd:3500, snd:'lightning'},
-    {name:'T形压制',  type:'aoe',        dmg:108,rng:292, cd:9500, snd:'explosion'},
+  T:{ color:0xFFD700, hp:1920, spd:123, skills:[
+    {name:'十字斬',   type:'slash',      dmg:26, rng:142, cd:4000, snd:'hit'},
+    {name:'雷霆下壓', type:'lightning',  dmg:29, rng:205, cd:5600, snd:'lightning'},
+    {name:'T形壓制',  type:'aoe',        dmg:59, rng:292, cd:15200,snd:'explosion'},
   ]},
-  U:{ color:0x7B68EE, hp:870,  spd:165, skills:[
-    {name:'U形陷阱',  type:'aoe',        dmg:48, rng:185, cd:3500, snd:'lightning'},
-    {name:'上勾拳',   type:'charge',     dmg:42, rng:142, cd:2500, snd:'hit'},
-    {name:'磁力吸引', type:'aoe',        dmg:92, rng:265, cd:9000, snd:'lightning'},
+  U:{ color:0x7B68EE, hp:1740, spd:140, skills:[
+    {name:'U形陷阱',  type:'aoe',        dmg:26, rng:185, cd:5600, snd:'lightning'},
+    {name:'上勾拳',   type:'charge',     dmg:23, rng:142, cd:4000, snd:'hit'},
+    {name:'磁力吸引', type:'aoe',        dmg:51, rng:265, cd:14400,snd:'lightning'},
   ]},
-  V:{ color:0xFA8072, hp:830,  spd:178, skills:[
-    {name:'V形夹攻',  type:'slash',      dmg:48, rng:152, cd:2500, snd:'hit'},
-    {name:'投掷飞镖', type:'projectile', dmg:38, rng:325, cd:2500, snd:'swoosh'},
-    {name:'胜利爆炸', type:'aoe',        dmg:102,rng:282, cd:9500, snd:'explosion'},
+  V:{ color:0xFA8072, hp:1660, spd:151, skills:[
+    {name:'V形夾攻',  type:'slash',      dmg:26, rng:152, cd:4000, snd:'hit'},
+    {name:'投擲飛鏢', type:'projectile', dmg:21, rng:325, cd:4000, snd:'swoosh'},
+    {name:'勝利爆炸', type:'aoe',        dmg:56, rng:282, cd:15200,snd:'explosion'},
   ]},
-  W:{ color:0x4169E1, hp:950,  spd:150, skills:[
-    {name:'波浪冲击', type:'aoe',        dmg:48, rng:225, cd:3000, snd:'swoosh'},
-    {name:'三叉扫荡', type:'slash',      dmg:42, rng:142, cd:2000, snd:'hit'},
-    {name:'巨浪席卷', type:'aoe',        dmg:112,rng:315, cd:10000,snd:'explosion'},
+  W:{ color:0x4169E1, hp:1900, spd:128, skills:[
+    {name:'波浪衝擊', type:'aoe',        dmg:26, rng:225, cd:4800, snd:'swoosh'},
+    {name:'三叉掃蕩', type:'slash',      dmg:23, rng:142, cd:3200, snd:'hit'},
+    {name:'巨浪席捲', type:'aoe',        dmg:62, rng:315, cd:16000,snd:'explosion'},
   ]},
-  X:{ color:0xFF6B6B, hp:860,  spd:178, skills:[
-    {name:'X形斩击',  type:'slash',      dmg:48, rng:132, cd:2000, snd:'hit'},
-    {name:'交叉爆炸', type:'aoe',        dmg:58, rng:205, cd:3500, snd:'explosion'},
-    {name:'瞬间移位', type:'charge',     dmg:102,rng:255, cd:9000, snd:'swoosh'},
+  X:{ color:0xFF6B6B, hp:1720, spd:151, skills:[
+    {name:'X形斬擊',  type:'slash',      dmg:26, rng:132, cd:3200, snd:'hit'},
+    {name:'交叉爆炸', type:'aoe',        dmg:32, rng:205, cd:5600, snd:'explosion'},
+    {name:'瞬間移位', type:'charge',     dmg:56, rng:255, cd:14400,snd:'swoosh'},
   ]},
-  Y:{ color:0xEE82EE, hp:840,  spd:172, skills:[
-    {name:'叉形攻击', type:'slash',      dmg:42, rng:132, cd:2000, snd:'hit'},
-    {name:'Y形分裂弹',type:'projectile', dmg:42, rng:285, cd:3000, snd:'swoosh'},
-    {name:'天降一击', type:'lightning',  dmg:108,rng:205, cd:9500, snd:'lightning'},
+  Y:{ color:0xEE82EE, hp:1680, spd:146, skills:[
+    {name:'叉形攻擊', type:'slash',      dmg:23, rng:132, cd:3200, snd:'hit'},
+    {name:'Y形分裂彈',type:'projectile', dmg:23, rng:285, cd:4800, snd:'swoosh'},
+    {name:'天降一擊', type:'lightning',  dmg:59, rng:205, cd:15200,snd:'lightning'},
   ]},
-  Z:{ color:0xB0C4DE, hp:790,  spd:168, skills:[
-    {name:'催眠波',   type:'aoe',        dmg:38, rng:265, cd:4000, snd:'lightning'},
-    {name:'Z形闪电',  type:'lightning',  dmg:52, rng:235, cd:3000, snd:'lightning'},
-    {name:'时间停滞', type:'aoe',        dmg:112,rng:305, cd:11000,snd:'lightning'},
+  Z:{ color:0xB0C4DE, hp:1580, spd:143, skills:[
+    {name:'催眠波',   type:'aoe',        dmg:21, rng:265, cd:6400, snd:'lightning'},
+    {name:'Z形閃電',  type:'lightning',  dmg:29, rng:235, cd:4800, snd:'lightning'},
+    {name:'時間停滯', type:'aoe',        dmg:62, rng:305, cd:17600,snd:'lightning'},
   ]},
 };
 
@@ -460,7 +460,7 @@ class Fighter {
     // Movement
     this.stateTimer -= delta;
     if (this.stateTimer <= 0) {
-      this.stateTimer = Phaser.Math.Between(700, 2200);
+      this.stateTimer = Phaser.Math.Between(1500, 4000);
       if (nearest && nearDist > 80) {
         this.state = 'CHASE';
       } else {
@@ -534,8 +534,8 @@ class Fighter {
   takeDamage(amount, attacker) {
     if (this.dead) return;
     this.hp -= amount;
-    this.hurtTimer = 380;
-    this.flashTimer = 320;
+    this.hurtTimer = 700;
+    this.flashTimer = 500;
     const dx = this.x - (attacker ? attacker.x : this.x);
     this.vx += Math.sign(dx) * 180;
     this.vy -= 120;
@@ -750,7 +750,7 @@ class BattleScene extends Phaser.Scene {
     }
 
     // Title banner
-    this.add.text(W / 2, 14, '⚔  字母大乱斗  ⚔', {
+    this.add.text(W / 2, 14, '⚔  字母大亂鬥  ⚔', {
       fontSize: '22px',
       fontFamily: '"Arial Black", Arial',
       color: '#FFD700',
@@ -849,7 +849,7 @@ class BattleScene extends Phaser.Scene {
     this.eliminationOrder.push(fighter.letter);
     const alive = this.fighters.filter(f => !f.dead).length;
     const kn = killer ? killer.letter : '?';
-    this.addLog(`💀 ${fighter.letter} 被 ${kn} 淘汰！  剩余 ${alive} 人`);
+    this.addLog(`💀 ${fighter.letter} 被 ${kn} 淘汰！  剩餘 ${alive} 人`);
   }
 
   update(time, delta) {
@@ -868,7 +868,7 @@ class BattleScene extends Phaser.Scene {
     this.projectiles = this.projectiles.filter(p => { p.update(delta, alive); return !p.dead; });
 
     // UI
-    this.aliveText.setText(`存活: ${alive.length} / 26`);
+    this.aliveText.setText(`存活：${alive.length} / 26`);
     this.logText.setText(this.logLines.join('\n'));
 
     // Win check
@@ -919,12 +919,12 @@ class VictoryScene extends Phaser.Scene {
     }
 
     // Title
-    this.add.text(W / 2, 30, '🏆  比赛结束！', {
+    this.add.text(W / 2, 30, '🏆  比賽結束！', {
       fontSize: '46px', fontFamily: '"Arial Black", Arial',
       color: '#FFD700', stroke: '#4A1500', strokeThickness: 7,
     }).setOrigin(0.5, 0).setDepth(10);
 
-    this.add.text(W / 2, 88, '颁奖典礼', {
+    this.add.text(W / 2, 88, '頒獎典禮', {
       fontSize: '20px', fontFamily: 'Arial',
       color: '#DDDDDD', stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5, 0).setDepth(10);
@@ -933,9 +933,9 @@ class VictoryScene extends Phaser.Scene {
     const podiumBaseY = H * 0.80;
     const podW = Math.min(160, W * 0.14);
     const podSpec = [
-      { rank: 1, letter: full[0], cx: W * 0.50, podH: 140, medal: '🥇', col: 0xFFD700, rankLabel: '冠军' },
-      { rank: 2, letter: full[1], cx: W * 0.30, podH:  90, medal: '🥈', col: 0xC0C0C0, rankLabel: '亚军' },
-      { rank: 3, letter: full[2], cx: W * 0.70, podH:  60, medal: '🥉', col: 0xCD7F32, rankLabel: '季军' },
+      { rank: 1, letter: full[0], cx: W * 0.50, podH: 140, medal: '🥇', col: 0xFFD700, rankLabel: '冠軍' },
+      { rank: 2, letter: full[1], cx: W * 0.30, podH:  90, medal: '🥈', col: 0xC0C0C0, rankLabel: '亞軍' },
+      { rank: 3, letter: full[2], cx: W * 0.70, podH:  60, medal: '🥉', col: 0xCD7F32, rankLabel: '季軍' },
     ];
 
     const pg = this.add.graphics().setDepth(5);
@@ -1022,7 +1022,7 @@ class VictoryScene extends Phaser.Scene {
     }).setOrigin(0.5, 0).setDepth(12);
 
     // Restart button
-    const btn = this.add.text(W / 2, H - 36, '  再来一局  ', {
+    const btn = this.add.text(W / 2, H - 36, '  再來一局  ', {
       fontSize: '22px', fontFamily: '"Arial Black", Arial',
       color: '#1A0055', backgroundColor: '#FFD700',
       padding: { x: 24, y: 10 },
