@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>字母大乱斗</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #000; overflow: hidden; }
+canvas { display: block; }
+</style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+<script>
+// ══════════════════════════════════════════════════════
+//  AUDIO MANAGER  (Web Audio API, no external files)
+// ══════════════════════════════════════════════════════
+class AudioManager {
+  constructor() {
+    try {
+      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      this.master = this.ctx.createGain();
+      this.master.gain.value = 0.35;
+      this.master.connect(this.ctx.destination);
+      this.ok = true;
+    } catch(e) { this.ok = false; }
+  }
+  _resume() { if (this.ok && this.ctx.state === 'suspended') this.ctx.resume(); }
+
+  hit() {
+    this._resume(); if (!this.ok) return;
+    const t = this.ctx.currentTime;
+    const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.connect(g); g.connect(this.master);
+    o.frequency.setValueAtTime(280, t);
+    o.frequency.exponentialRampToValueAtTime(60, t + 0.12);
+    g.gain.setValueAtTime(0.7, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+    o.start(t); o.stop(t + 0.12);
+  }
+
+  explosion() {
+    this._resume(); if (!this.ok) return;
+    const t = this.ctx.currentTime;
+    const sr = this.ctx.sampleRate;
+    const buf = this.ctx.createBuffer(1, sr * 0.55, sr);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1);
+    const src = this.ctx.createBufferSource();
+    const flt = this.ctx.createBiquadFilter();
+    const g = this.ctx.createGain();
+    flt.type = 'lowpass';
+    flt.frequency.setValueAtTime(500, t);
+    flt.frequency.exponentialRampToValueAtTime(40, t + 0.55);
+    g.gain.setValueAtTime(1.0, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
+    src.buffer = buf;
+    src.connect(flt); flt.connect(g); g.connect(this.master);
+    src.start(t); src.stop(t + 0.55);
+  }
+
+  lightning() {
+    this._resume(); if (!this.ok) return;
+    const t = this.ctx.currentTime;
+    const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.type = 'sawtooth';
+    o.connect(g); g.connect(this.master);
+    o.frequency.setValueAtTime(900, t);
+    o.frequency.exponentialRampToValueAtTime(150, t + 0.25);
+    g.gain.setValueAtTime(0.55, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+    o.start(t); o.stop(t + 0.25);
+  }
+
+  swoosh() {
+    this._resume(); if (!this.ok) return;
+    const t = this.ctx.currentTime;
+    const sr = this.ctx.sampleRate;
+    const buf = this.ctx.createBuffer(1, sr * 0.28, sr);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+    const src = this.ctx.createBufferSource();
+    const flt = this.ctx.createBiquadFilter();
+    const g = this.ctx.createGain();
+    flt.type = 'highpass';
+    flt.frequency.setValueAtTime(1200, t);
+    g.gain.setValueAtTime(0.45, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+    src.buffer = buf;
+    src.connect(flt); flt.connect(g); g.connect(this.master);
+    src.start(t); src.stop(t + 0.28);
+  }
+
+  death() {
+    this._resume(); if (!this.ok) return;
+    const t = this.ctx.currentTime;
+    const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.connect(g); g.connect(this.master);
+    o.frequency.setValueAtTime(440, t);
+    o.frequency.linearRampToValueAtTime(80, t + 0.9);
+    g.gain.setValueAtTime(0.6, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.9);
+    o.start(t); o.stop(t + 0.9);
+  }
+
+  victory() {
+    this._resume(); if (!this.ok) return;
+    [523, 659, 784, 1047, 1319].forEach((freq, i) => {
+      const t = this.ctx.currentTime + i * 0.18;
+      const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0.5, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+      o.connect(g); g.connect(this.master);
+      o.start(t); o.stop(t + 0.45);
+    });
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  LETTER CONFIGS  (26 letters × unique stats + skills)
+// ══════════════════════════════════════════════════════
+const LC = {
+  A:{ color:0xFF4455, hp:900,  spd:155, skills:[
+    {name:'角刺突进', type:'charge',     dmg:42, rng:190, cd:3500, snd:'swoosh'},
+    {name:'三角斩击', type:'slash',      dmg:28, rng:110, cd:1800, snd:'hit'},
+    {name:'地裂震波', type:'aoe',        dmg:88, rng:280, cd:9000, snd:'explosion'},
+  ]},
+  B:{ color:0xFF8C00, hp:1100, spd:118, skills:[
+    {name:'滚体压碎', type:'charge',     dmg:52, rng:200, cd:4000, snd:'explosion'},
+    {name:'双泡炸弹', type:'projectile', dmg:33, rng:300, cd:2500, snd:'hit'},
+    {name:'大地震',   type:'aoe',        dmg:105,rng:260, cd:10000,snd:'explosion'},
+  ]},
+  C:{ color:0xFFD700, hp:820,  spd:178, skills:[
+    {name:'月牙飞刃', type:'projectile', dmg:38, rng:320, cd:2500, snd:'swoosh'},
+    {name:'包抄斩',   type:'slash',      dmg:32, rng:130, cd:2000, snd:'hit'},
+    {name:'音波冲击', type:'aoe',        dmg:82, rng:265, cd:8500, snd:'explosion'},
+  ]},
+  D:{ color:0x7CFC00, hp:1000, spd:138, skills:[
+    {name:'弓箭连射', type:'projectile', dmg:28, rng:350, cd:2000, snd:'swoosh'},
+    {name:'盾牌反弹', type:'slash',      dmg:48, rng:105, cd:3000, snd:'hit'},
+    {name:'半月箭雨', type:'aoe',        dmg:90, rng:270, cd:9000, snd:'swoosh'},
+  ]},
+  E:{ color:0x00CED1, hp:870,  spd:162, skills:[
+    {name:'三排连电', type:'lightning',  dmg:38, rng:220, cd:2500, snd:'lightning'},
+    {name:'梳形斩',   type:'slash',      dmg:28, rng:120, cd:1800, snd:'hit'},
+    {name:'电磁脉冲', type:'aoe',        dmg:95, rng:290, cd:9500, snd:'lightning'},
+  ]},
+  F:{ color:0xFF6347, hp:800,  spd:182, skills:[
+    {name:'喷火',     type:'projectile', dmg:32, rng:250, cd:2000, snd:'explosion'},
+    {name:'旗杆横扫', type:'slash',      dmg:42, rng:140, cd:2500, snd:'swoosh'},
+    {name:'龙卷焰',   type:'aoe',        dmg:102,rng:270, cd:10000,snd:'explosion'},
+  ]},
+  G:{ color:0xADFF2F, hp:950,  spd:145, skills:[
+    {name:'钩爪抓取', type:'charge',     dmg:48, rng:200, cd:3500, snd:'swoosh'},
+    {name:'螺旋冲',   type:'charge',     dmg:38, rng:180, cd:3000, snd:'swoosh'},
+    {name:'吸血吸收', type:'slash',      dmg:82, rng:155, cd:8000, snd:'hit'},
+  ]},
+  H:{ color:0x9370DB, hp:1050, spd:132, skills:[
+    {name:'双柱夹击', type:'slash',      dmg:48, rng:132, cd:3000, snd:'hit'},
+    {name:'梯形踩踏', type:'aoe',        dmg:42, rng:185, cd:4000, snd:'explosion'},
+    {name:'稳步重拳', type:'charge',     dmg:105,rng:155, cd:9000, snd:'explosion'},
+  ]},
+  I:{ color:0x00BFFF, hp:750,  spd:192, skills:[
+    {name:'直线穿刺', type:'charge',     dmg:38, rng:220, cd:2000, snd:'swoosh'},
+    {name:'闪电落雷', type:'lightning',  dmg:48, rng:205, cd:3000, snd:'lightning'},
+    {name:'分裂光束', type:'aoe',        dmg:88, rng:300, cd:9000, snd:'lightning'},
+  ]},
+  J:{ color:0xFF69B4, hp:830,  spd:172, skills:[
+    {name:'钩形投掷', type:'projectile', dmg:42, rng:285, cd:2500, snd:'swoosh'},
+    {name:'鞭打连击', type:'slash',      dmg:28, rng:155, cd:1800, snd:'hit'},
+    {name:'回旋踢',   type:'aoe',        dmg:92, rng:205, cd:8500, snd:'swoosh'},
+  ]},
+  K:{ color:0xFFA500, hp:880,  spd:178, skills:[
+    {name:'斜刃斩',   type:'slash',      dmg:42, rng:132, cd:2000, snd:'hit'},
+    {name:'忍者飞镖', type:'projectile', dmg:32, rng:305, cd:2000, snd:'swoosh'},
+    {name:'反踢弹射', type:'charge',     dmg:98, rng:165, cd:8000, snd:'swoosh'},
+  ]},
+  L:{ color:0x32CD32, hp:980,  spd:142, skills:[
+    {name:'地板震击', type:'aoe',        dmg:52, rng:205, cd:3500, snd:'explosion'},
+    {name:'直角切割', type:'slash',      dmg:38, rng:122, cd:2000, snd:'hit'},
+    {name:'横扫地面', type:'charge',     dmg:98, rng:285, cd:9000, snd:'swoosh'},
+  ]},
+  M:{ color:0xDC143C, hp:1050, spd:128, skills:[
+    {name:'双峰重击', type:'slash',      dmg:52, rng:142, cd:3000, snd:'hit'},
+    {name:'山崩碎石', type:'aoe',        dmg:68, rng:265, cd:5000, snd:'explosion'},
+    {name:'地底爆破', type:'aoe',        dmg:115,rng:305, cd:10000,snd:'explosion'},
+  ]},
+  N:{ color:0x1E90FF, hp:850,  spd:165, skills:[
+    {name:'折线闪电', type:'lightning',  dmg:42, rng:245, cd:2500, snd:'lightning'},
+    {name:'对角冲刺', type:'charge',     dmg:38, rng:205, cd:2500, snd:'swoosh'},
+    {name:'N形震波',  type:'aoe',        dmg:92, rng:272, cd:9000, snd:'explosion'},
+  ]},
+  O:{ color:0xFF8C00, hp:900,  spd:155, skills:[
+    {name:'圆圈旋风', type:'aoe',        dmg:48, rng:165, cd:3000, snd:'swoosh'},
+    {name:'滚动压碎', type:'charge',     dmg:42, rng:205, cd:3000, snd:'explosion'},
+    {name:'魔法圆阵', type:'aoe',        dmg:102,rng:305, cd:10000,snd:'lightning'},
+  ]},
+  P:{ color:0xFF1493, hp:840,  spd:165, skills:[
+    {name:'炸弹投掷', type:'projectile', dmg:48, rng:285, cd:3000, snd:'explosion'},
+    {name:'气泡爆炸', type:'aoe',        dmg:38, rng:185, cd:2500, snd:'explosion'},
+    {name:'头槌冲',   type:'charge',     dmg:88, rng:175, cd:8000, snd:'hit'},
+  ]},
+  Q:{ color:0xDEB887, hp:920,  spd:150, skills:[
+    {name:'圆圈魔法', type:'aoe',        dmg:52, rng:205, cd:3500, snd:'lightning'},
+    {name:'尾巴鞭打', type:'slash',      dmg:38, rng:155, cd:2000, snd:'hit'},
+    {name:'问号诅咒', type:'aoe',        dmg:102,rng:265, cd:9500, snd:'lightning'},
+  ]},
+  R:{ color:0xFF4500, hp:870,  spd:172, skills:[
+    {name:'腿部横扫', type:'slash',      dmg:38, rng:132, cd:2000, snd:'hit'},
+    {name:'回旋肘击', type:'charge',     dmg:48, rng:162, cd:3000, snd:'hit'},
+    {name:'摇滚冲撞', type:'aoe',        dmg:92, rng:245, cd:8500, snd:'explosion'},
+  ]},
+  S:{ color:0x00FA9A, hp:810,  spd:182, skills:[
+    {name:'蛇形咬击', type:'slash',      dmg:32, rng:122, cd:1800, snd:'hit'},
+    {name:'螺旋冲刺', type:'charge',     dmg:48, rng:205, cd:3000, snd:'swoosh'},
+    {name:'毒液喷射', type:'projectile', dmg:88, rng:285, cd:8000, snd:'swoosh'},
+  ]},
+  T:{ color:0xFFD700, hp:960,  spd:145, skills:[
+    {name:'十字斩',   type:'slash',      dmg:48, rng:142, cd:2500, snd:'hit'},
+    {name:'雷霆下压', type:'lightning',  dmg:52, rng:205, cd:3500, snd:'lightning'},
+    {name:'T形压制',  type:'aoe',        dmg:108,rng:292, cd:9500, snd:'explosion'},
+  ]},
+  U:{ color:0x7B68EE, hp:870,  spd:165, skills:[
+    {name:'U形陷阱',  type:'aoe',        dmg:48, rng:185, cd:3500, snd:'lightning'},
+    {name:'上勾拳',   type:'charge',     dmg:42, rng:142, cd:2500, snd:'hit'},
+    {name:'磁力吸引', type:'aoe',        dmg:92, rng:265, cd:9000, snd:'lightning'},
+  ]},
+  V:{ color:0xFA8072, hp:830,  spd:178, skills:[
+    {name:'V形夹攻',  type:'slash',      dmg:48, rng:152, cd:2500, snd:'hit'},
+    {name:'投掷飞镖', type:'projectile', dmg:38, rng:325, cd:2500, snd:'swoosh'},
+    {name:'胜利爆炸', type:'aoe',        dmg:102,rng:282, cd:9500, snd:'explosion'},
+  ]},
+  W:{ color:0x4169E1, hp:950,  spd:150, skills:[
+    {name:'波浪冲击', type:'aoe',        dmg:48, rng:225, cd:3000, snd:'swoosh'},
+    {name:'三叉扫荡', type:'slash',      dmg:42, rng:142, cd:2000, snd:'hit'},
+    {name:'巨浪席卷', type:'aoe',        dmg:112,rng:315, cd:10000,snd:'explosion'},
+  ]},
+  X:{ color:0xFF6B6B, hp:860,  spd:178, skills:[
+    {name:'X形斩击',  type:'slash',      dmg:48, rng:132, cd:2000, snd:'hit'},
+    {name:'交叉爆炸', type:'aoe',        dmg:58, rng:205, cd:3500, snd:'explosion'},
+    {name:'瞬间移位', type:'charge',     dmg:102,rng:255, cd:9000, snd:'swoosh'},
+  ]},
+  Y:{ color:0xEE82EE, hp:840,  spd:172, skills:[
+    {name:'叉形攻击', type:'slash',      dmg:42, rng:132, cd:2000, snd:'hit'},
+    {name:'Y形分裂弹',type:'projectile', dmg:42, rng:285, cd:3000, snd:'swoosh'},
+    {name:'天降一击', type:'lightning',  dmg:108,rng:205, cd:9500, snd:'lightning'},
+  ]},
+  Z:{ color:0xB0C4DE, hp:790,  spd:168, skills:[
+    {name:'催眠波',   type:'aoe',        dmg:38, rng:265, cd:4000, snd:'lightning'},
+    {name:'Z形闪电',  type:'lightning',  dmg:52, rng:235, cd:3000, snd:'lightning'},
+    {name:'时间停滞', type:'aoe',        dmg:112,rng:305, cd:11000,snd:'lightning'},
+  ]},
+};
+
+// ══════════════════════════════════════════════════════
+//  EFFECT  (visual hit / skill effects)
+// ══════════════════════════════════════════════════════
+class Effect {
+  constructor(scene, x, y, type, color, radius) {
+    this.scene = scene;
+    this.x = x; this.y = y;
+    this.type = type;
+    this.color = color;
+    this.radius = radius;
+    this.life = 1.0;
+    this.dead = false;
+    this.gfx = scene.add.graphics().setDepth(12);
+  }
+  update(delta) {
+    this.life -= delta / 550;
+    if (this.life <= 0) { this.dead = true; this.gfx.destroy(); return; }
+    const a = this.life;
+    const r = this.radius * (1.8 - this.life * 0.8);
+    this.gfx.clear();
+    // Outer ring
+    this.gfx.lineStyle(3, this.color, a);
+    this.gfx.strokeCircle(this.x, this.y, r);
+    // Inner glow
+    this.gfx.fillStyle(this.color, a * 0.18);
+    this.gfx.fillCircle(this.x, this.y, r * 0.7);
+    // Type-specific overlay
+    if (this.type === 'slash') {
+      this.gfx.lineStyle(5, 0xFFFFFF, a * 0.9);
+      this.gfx.beginPath();
+      this.gfx.moveTo(this.x - r * 0.9, this.y - r * 0.4);
+      this.gfx.lineTo(this.x + r * 0.9, this.y + r * 0.4);
+      this.gfx.strokePath();
+      this.gfx.beginPath();
+      this.gfx.moveTo(this.x - r * 0.5, this.y - r * 0.9);
+      this.gfx.lineTo(this.x + r * 0.5, this.y + r * 0.9);
+      this.gfx.strokePath();
+    } else if (this.type === 'lightning') {
+      this.gfx.lineStyle(3, 0xFFFF44, a);
+      for (let i = 0; i < 4; i++) {
+        const ang = (i / 4) * Math.PI * 2 + this.life * 3;
+        this.gfx.beginPath();
+        this.gfx.moveTo(this.x, this.y);
+        const mx = this.x + Math.cos(ang) * r * 0.5 + (Math.random()-0.5)*20;
+        const my = this.y + Math.sin(ang) * r * 0.5 + (Math.random()-0.5)*20;
+        this.gfx.lineTo(mx, my);
+        this.gfx.lineTo(this.x + Math.cos(ang) * r, this.y + Math.sin(ang) * r);
+        this.gfx.strokePath();
+      }
+    } else if (this.type === 'charge') {
+      this.gfx.lineStyle(4, 0xFFFFFF, a * 0.7);
+      this.gfx.beginPath();
+      this.gfx.moveTo(this.x - r, this.y);
+      this.gfx.lineTo(this.x + r, this.y);
+      this.gfx.strokePath();
+    } else if (this.type === 'aoe') {
+      this.gfx.lineStyle(2, this.color, a * 0.5);
+      this.gfx.strokeCircle(this.x, this.y, r * 1.3);
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  PROJECTILE
+// ══════════════════════════════════════════════════════
+class Projectile {
+  constructor(scene, x, y, tx, ty, dmg, color, owner) {
+    this.scene = scene;
+    this.x = x; this.y = y;
+    this.dmg = dmg; this.color = color; this.owner = owner;
+    this.dead = false;
+    this.lifeMs = 2200;
+    const ang = Math.atan2(ty - y, tx - x);
+    const spd = 420;
+    this.vx = Math.cos(ang) * spd;
+    this.vy = Math.sin(ang) * spd;
+    this.gfx = scene.add.graphics().setDepth(11);
+    this.trail = [];
+  }
+  update(delta, fighters) {
+    if (this.dead) return;
+    const dt = delta / 1000;
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+    this.lifeMs -= delta;
+    const W = this.scene.scale.width, H = this.scene.scale.height;
+    if (this.x < -20 || this.x > W+20 || this.y < -20 || this.y > H+20 || this.lifeMs <= 0) {
+      this.dead = true; this.gfx.destroy(); return;
+    }
+    for (const f of fighters) {
+      if (f === this.owner || f.dead) continue;
+      if (Math.hypot(f.x - this.x, f.y - this.y) < 28) {
+        f.takeDamage(this.dmg, this.owner);
+        this.dead = true; this.gfx.destroy(); return;
+      }
+    }
+    this.trail.push({ x: this.x, y: this.y });
+    if (this.trail.length > 6) this.trail.shift();
+    this.gfx.clear();
+    // Trail
+    this.trail.forEach((p, i) => {
+      const a = i / this.trail.length * 0.5;
+      this.gfx.fillStyle(this.color, a);
+      this.gfx.fillCircle(p.x, p.y, 5 * (i / this.trail.length));
+    });
+    // Head
+    this.gfx.fillStyle(this.color, 1);
+    this.gfx.fillCircle(this.x, this.y, 9);
+    this.gfx.fillStyle(0xFFFFFF, 0.7);
+    this.gfx.fillCircle(this.x - 2, this.y - 2, 4);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  FIGHTER
+// ══════════════════════════════════════════════════════
+class Fighter {
+  constructor(scene, x, y, letter) {
+    this.scene = scene;
+    this.x = x; this.y = y;
+    this.letter = letter;
+    this.cfg = LC[letter];
+    this.hp = this.cfg.hp;
+    this.maxHp = this.cfg.hp;
+    this.vx = 0; this.vy = 0;
+    this.onGround = false;
+    this.state = 'WANDER'; // WANDER CHASE ATTACK HURT DEAD
+    this.target = null;
+    this.cds = [0, 0, 0];        // skill cooldowns ms
+    this.stateTimer = Phaser.Math.Between(800, 2500);
+    this.hurtTimer = 0;
+    this.flashTimer = 0;
+    this.dead = false;
+    this.alpha = 1;
+    this.facing = 1; // 1=right -1=left
+    this.wanderVx = 0;
+    this.jumpTimer = Phaser.Math.Between(2000, 5000);
+    this.rank = 0;
+
+    this.bodyGfx = scene.add.graphics().setDepth(5);
+    this.hpGfx   = scene.add.graphics().setDepth(6);
+    this.lblTxt  = scene.add.text(x, y, letter, {
+      fontSize: '36px',
+      fontFamily: '"Arial Black", Arial, sans-serif',
+      color: '#ffffff',
+      stroke: '#000000',
+      strokeThickness: 5,
+    }).setOrigin(0.5, 0.5).setDepth(7);
+    this.nameTxt = scene.add.text(x, y - 55, letter, {
+      fontSize: '11px',
+      fontFamily: 'Arial',
+      color: '#ffffff',
+      stroke: '#000000',
+      strokeThickness: 2,
+    }).setOrigin(0.5, 1).setDepth(7);
+  }
+
+  destroy() {
+    this.bodyGfx.destroy();
+    this.hpGfx.destroy();
+    this.lblTxt.destroy();
+    this.nameTxt.destroy();
+  }
+
+  update(delta, fighters, platforms, effects, projectiles, audio) {
+    if (this.dead) return;
+    const dt = delta / 1000;
+
+    // Cooldowns
+    for (let i = 0; i < 3; i++) if (this.cds[i] > 0) this.cds[i] -= delta;
+    if (this.hurtTimer > 0) { this.hurtTimer -= delta; }
+    if (this.flashTimer > 0) this.flashTimer -= delta;
+    if (this.jumpTimer > 0) this.jumpTimer -= delta;
+
+    if (this.hurtTimer <= 0 && !this.dead) {
+      this.updateAI(delta, fighters, effects, projectiles, audio);
+    }
+
+    this.applyPhysics(dt, platforms);
+    this.draw();
+  }
+
+  updateAI(delta, fighters, effects, projectiles, audio) {
+    const alive = fighters.filter(f => f !== this && !f.dead);
+    if (!alive.length) return;
+
+    // Pick nearest target
+    let nearest = null, nearDist = Infinity;
+    for (const f of alive) {
+      const d = Math.hypot(f.x - this.x, f.y - this.y);
+      if (d < nearDist) { nearDist = d; nearest = f; }
+    }
+    this.target = nearest;
+
+    // Try skills in priority order: ultimate (idx2) if very close, then 1, then 0
+    const tryOrder = [2, 1, 0];
+    for (const si of tryOrder) {
+      const sk = this.cfg.skills[si];
+      if (this.cds[si] <= 0 && nearDist <= sk.rng * 0.9) {
+        this.execSkill(si, nearest, effects, projectiles, audio);
+        return;
+      }
+    }
+
+    // Movement
+    this.stateTimer -= delta;
+    if (this.stateTimer <= 0) {
+      this.stateTimer = Phaser.Math.Between(700, 2200);
+      if (nearest && nearDist > 80) {
+        this.state = 'CHASE';
+      } else {
+        this.state = 'WANDER';
+        this.wanderVx = Phaser.Math.Between(-100, 100);
+      }
+    }
+
+    if (this.state === 'CHASE' && nearest) {
+      const dx = nearest.x - this.x;
+      this.vx = Phaser.Math.Linear(this.vx, Math.sign(dx) * this.cfg.spd, 0.12);
+      this.facing = Math.sign(dx) || 1;
+      // Jump toward target if it's higher or we're stuck
+      if (nearest.y < this.y - 70 && this.onGround && this.jumpTimer <= 0) {
+        this.vy = -560;
+        this.jumpTimer = Phaser.Math.Between(1200, 2500);
+      }
+    } else {
+      // Wander
+      this.vx = Phaser.Math.Linear(this.vx, this.wanderVx, 0.06);
+      if (Math.abs(this.vx) > 5) this.facing = Math.sign(this.vx);
+    }
+
+    // Random jumps
+    if (this.onGround && this.jumpTimer <= 0 && Math.random() < 0.004) {
+      this.vy = -500;
+      this.jumpTimer = Phaser.Math.Between(1500, 3500);
+    }
+  }
+
+  execSkill(si, target, effects, projectiles, audio) {
+    const sk = this.cfg.skills[si];
+    this.cds[si] = sk.cd;
+    this.stateTimer = 600;
+
+    // Sound
+    if (audio) {
+      if      (sk.snd === 'hit')       audio.hit();
+      else if (sk.snd === 'explosion') audio.explosion();
+      else if (sk.snd === 'lightning') audio.lightning();
+      else if (sk.snd === 'swoosh')    audio.swoosh();
+    }
+
+    // Log
+    this.scene.addLog(`${this.letter} 使用【${sk.name}】→ ${target.letter}  -${sk.dmg}HP`);
+
+    // Visual effect
+    const ex = (this.x + target.x) * 0.5;
+    const ey = (this.y + target.y) * 0.5;
+    effects.push(new Effect(this.scene, ex, ey, sk.type, this.cfg.color, sk.rng * 0.38));
+
+    if (sk.type === 'projectile') {
+      projectiles.push(new Projectile(this.scene, this.x, this.y, target.x, target.y, sk.dmg, this.cfg.color, this));
+    } else if (sk.type === 'aoe') {
+      for (const f of this.scene.fighters) {
+        if (f === this || f.dead) continue;
+        if (Math.hypot(f.x - this.x, f.y - this.y) < sk.rng) {
+          f.takeDamage(sk.dmg, this);
+        }
+      }
+    } else {
+      // charge / slash / lightning: direct hit if in range
+      if (Math.hypot(target.x - this.x, target.y - this.y) < sk.rng) {
+        target.takeDamage(sk.dmg, this);
+      }
+    }
+
+    this.facing = target.x > this.x ? 1 : -1;
+  }
+
+  takeDamage(amount, attacker) {
+    if (this.dead) return;
+    this.hp -= amount;
+    this.hurtTimer = 380;
+    this.flashTimer = 320;
+    const dx = this.x - (attacker ? attacker.x : this.x);
+    this.vx += Math.sign(dx) * 180;
+    this.vy -= 120;
+    if (this.hp <= 0) { this.hp = 0; this.die(attacker); }
+  }
+
+  die(killer) {
+    this.dead = true;
+    this.scene.audio.death();
+    this.scene.onFighterDied(this, killer);
+    this.scene.tweens.add({
+      targets: { val: 1 },
+      val: 0,
+      duration: 1100,
+      onUpdate: (tw) => {
+        const v = tw.targets[0].val;
+        this.alpha = v;
+        this.bodyGfx.setAlpha(v);
+        this.hpGfx.setAlpha(v);
+        this.lblTxt.setAlpha(v);
+        this.nameTxt.setAlpha(v);
+      },
+      onComplete: () => this.destroy(),
+    });
+  }
+
+  applyPhysics(dt, platforms) {
+    // Gravity
+    this.vy += 680 * dt;
+    this.vx = Phaser.Math.Clamp(this.vx, -380, 380);
+    this.vy = Phaser.Math.Clamp(this.vy, -800, 750);
+
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+
+    const W = this.scene.scale.width;
+    const H = this.scene.scale.height;
+    const R = 26; // collision radius
+
+    // World bounds
+    if (this.x < R)   { this.x = R;   this.vx =  Math.abs(this.vx) * 0.4; }
+    if (this.x > W-R) { this.x = W-R; this.vx = -Math.abs(this.vx) * 0.4; }
+
+    // Platforms (land on top only)
+    this.onGround = false;
+    for (const p of platforms) {
+      const prevY = this.y - this.vy * dt - R;
+      if (this.x > p.x - 10 && this.x < p.x + p.w + 10 &&
+          this.y + R > p.y && this.y + R < p.y + 30 &&
+          this.vy >= 0) {
+        this.y = p.y - R;
+        this.vy = 0;
+        this.onGround = true;
+        this.vx *= 0.88; // friction
+      }
+    }
+
+    // Floor
+    if (this.y + R > H - 48) {
+      this.y = H - 48 - R;
+      this.vy = 0;
+      this.onGround = true;
+      this.vx *= 0.88;
+    }
+  }
+
+  draw() {
+    if (this.dead && this.alpha <= 0) return;
+    const a = this.alpha;
+    const flash = this.flashTimer > 0 && Math.sin(this.flashTimer * 0.07) > 0;
+
+    this.bodyGfx.clear();
+    this.hpGfx.clear();
+
+    if (flash) {
+      // White flash when hurt
+      this.bodyGfx.fillStyle(0xFFFFFF, 0.85);
+      this.bodyGfx.fillCircle(this.x, this.y, 29);
+    } else {
+      // Shadow
+      this.bodyGfx.fillStyle(0x000000, 0.22 * a);
+      this.bodyGfx.fillEllipse(this.x, this.y + 28, 52, 12);
+
+      // Body
+      this.bodyGfx.fillStyle(this.cfg.color, 0.88 * a);
+      this.bodyGfx.fillCircle(this.x, this.y, 27);
+
+      // Rim
+      this.bodyGfx.lineStyle(2.5, 0xFFFFFF, 0.45 * a);
+      this.bodyGfx.strokeCircle(this.x, this.y, 27);
+
+      // Eyes
+      const ex = this.facing * 7;
+      this.bodyGfx.fillStyle(0xFFFFFF, a);
+      this.bodyGfx.fillCircle(this.x + ex - 7,  this.y - 6, 5);
+      this.bodyGfx.fillCircle(this.x + ex + 7,  this.y - 6, 5);
+      this.bodyGfx.fillStyle(0x111111, a);
+      this.bodyGfx.fillCircle(this.x + ex - 6,  this.y - 5, 3);
+      this.bodyGfx.fillCircle(this.x + ex + 8,  this.y - 5, 3);
+
+      // Smile / grimace based on HP ratio
+      const ratio = this.hp / this.maxHp;
+      if (ratio > 0.5) {
+        this.bodyGfx.lineStyle(2, 0x333333, a);
+        this.bodyGfx.beginPath();
+        this.bodyGfx.arc(this.x + ex, this.y + 6, 7, 0, Math.PI);
+        this.bodyGfx.strokePath();
+      } else {
+        this.bodyGfx.lineStyle(2, 0x333333, a);
+        this.bodyGfx.beginPath();
+        this.bodyGfx.arc(this.x + ex, this.y + 14, 7, Math.PI, 0);
+        this.bodyGfx.strokePath();
+      }
+    }
+
+    // Letter
+    this.lblTxt.setPosition(this.x, this.y + 4);
+    this.lblTxt.setAlpha(a);
+
+    // HP bar
+    const bw = 52, bh = 7;
+    const bx = this.x - bw * 0.5, by = this.y - 50;
+    const ratio = this.hp / this.maxHp;
+    const hcol = ratio > 0.55 ? 0x22EE22 : ratio > 0.28 ? 0xFFDD00 : 0xFF2222;
+    this.hpGfx.fillStyle(0x222222, 0.75 * a);
+    this.hpGfx.fillRect(bx - 1, by - 1, bw + 2, bh + 2);
+    this.hpGfx.fillStyle(hcol, a);
+    this.hpGfx.fillRect(bx, by, bw * ratio, bh);
+    this.hpGfx.lineStyle(1, 0xFFFFFF, 0.4 * a);
+    this.hpGfx.strokeRect(bx, by, bw, bh);
+
+    // Name label
+    this.nameTxt.setPosition(this.x, by - 2);
+    this.nameTxt.setAlpha(a);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  BATTLE SCENE
+// ══════════════════════════════════════════════════════
+class BattleScene extends Phaser.Scene {
+  constructor() { super('BattleScene'); }
+
+  create() {
+    this.W = this.scale.width;
+    this.H = this.scale.height;
+    this.audio = new AudioManager();
+    this.effects = [];
+    this.projectiles = [];
+    this.logLines = [];
+    this.eliminationOrder = []; // letters in order of elimination (first dead = index 0)
+    this.platforms = [];
+    this.gameOver = false;
+
+    this.createBackground();
+    this.createPlatforms();
+    this.createFighters();
+    this.createUI();
+
+    // Resume audio on first interaction
+    this.input.once('pointerdown', () => this.audio._resume());
+  }
+
+  // ---- Background ----
+  createBackground() {
+    const W = this.W, H = this.H;
+    const g = this.add.graphics().setDepth(0);
+
+    // Sky: light blue → warm cream (arena feel)
+    g.fillGradientStyle(0x7EC8E3, 0x7EC8E3, 0xF5DEB3, 0xF5DEB3, 1);
+    g.fillRect(0, 0, W, H);
+
+    // Crowd stands (upper area)
+    g.fillStyle(0xE8C888, 0.7);
+    g.fillRect(0, H * 0.05, W, H * 0.28);
+
+    // Crowd dots (simple)
+    for (let row = 0; row < 4; row++) {
+      for (let col = 0; col < 40; col++) {
+        const cx = col * (W / 39) + (row % 2) * (W / 80);
+        const cy = H * 0.07 + row * (H * 0.055);
+        const colors = [0xFF9999, 0x99AAFF, 0xFFFF99, 0x99FF99, 0xFFAA44];
+        g.fillStyle(colors[(row * 7 + col) % colors.length], 0.8);
+        g.fillCircle(cx, cy, 6);
+      }
+    }
+
+    // Arena side walls / columns
+    for (let i = 0; i < 5; i++) {
+      const cx = (i + 0.5) * (W / 5);
+      g.fillStyle(0xD4A96A, 0.9);
+      g.fillRect(cx - 14, H * 0.05, 28, H * 0.28);
+      g.fillStyle(0xE8C888, 0.8);
+      g.fillRect(cx - 18, H * 0.04, 36, 22);
+      g.fillStyle(0xC09050, 0.6);
+      g.fillRect(cx - 18, H * 0.32, 36, 16);
+    }
+
+    // Arena floor band
+    g.fillStyle(0xC2933A, 1);
+    g.fillRect(0, H - 48, W, 48);
+    g.fillStyle(0xD4AA55, 1);
+    g.fillRect(0, H - 48, W, 12);
+    // Floor tiles
+    g.lineStyle(1, 0xAA7A22, 0.4);
+    for (let i = 0; i < 30; i++) {
+      const tx = i * (W / 29);
+      g.beginPath(); g.moveTo(tx, H - 48); g.lineTo(tx, H); g.strokePath();
+    }
+    for (let j = 0; j < 3; j++) {
+      g.beginPath(); g.moveTo(0, H - 48 + j * 16); g.lineTo(W, H - 48 + j * 16); g.strokePath();
+    }
+
+    // Title banner
+    this.add.text(W / 2, 14, '⚔  字母大乱斗  ⚔', {
+      fontSize: '22px',
+      fontFamily: '"Arial Black", Arial',
+      color: '#FFD700',
+      stroke: '#8B4513',
+      strokeThickness: 5,
+    }).setOrigin(0.5, 0).setDepth(20);
+  }
+
+  // ---- Platforms ----
+  createPlatforms() {
+    const W = this.W, H = this.H;
+    // [x_ratio, y_ratio, w_ratio]
+    const defs = [
+      [0.03, 0.76, 0.16],
+      [0.22, 0.63, 0.17],
+      [0.42, 0.53, 0.10],
+      [0.57, 0.67, 0.15],
+      [0.75, 0.55, 0.15],
+      [0.12, 0.47, 0.13],
+      [0.68, 0.40, 0.12],
+      [0.38, 0.38, 0.08],
+    ];
+
+    const g = this.add.graphics().setDepth(3);
+    for (const [xr, yr, wr] of defs) {
+      const px = W * xr, py = H * yr, pw = W * wr;
+      // Shadow
+      g.fillStyle(0x000000, 0.2);
+      g.fillRect(px + 4, py + 4, pw, 20);
+      // Platform body
+      g.fillStyle(0x9B7722, 1);
+      g.fillRect(px, py, pw, 20);
+      // Top face highlight
+      g.fillStyle(0xD4AA44, 1);
+      g.fillRect(px, py, pw, 8);
+      // Outline
+      g.lineStyle(1.5, 0x5A4010, 0.9);
+      g.strokeRect(px, py, pw, 20);
+      // Stone joints
+      const stones = Math.max(2, Math.floor(pw / 38));
+      for (let s = 1; s < stones; s++) {
+        const sx = px + s * (pw / stones);
+        g.lineStyle(1, 0x5A4010, 0.35);
+        g.beginPath(); g.moveTo(sx, py); g.lineTo(sx, py + 20); g.strokePath();
+      }
+      this.platforms.push({ x: px, y: py, w: pw });
+    }
+  }
+
+  // ---- Fighters ----
+  createFighters() {
+    this.fighters = [];
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    const W = this.W, H = this.H;
+    letters.forEach((l, i) => {
+      const col = i % 13;
+      const row = Math.floor(i / 13);
+      const x = 55 + col * ((W - 110) / 12) + Phaser.Math.Between(-15, 15);
+      const y = H - 160 - row * 90;
+      this.fighters.push(new Fighter(this, x, y, l));
+    });
+  }
+
+  // ---- UI ----
+  createUI() {
+    const W = this.W, H = this.H;
+
+    // Alive count
+    this.aliveText = this.add.text(12, 46, '', {
+      fontSize: '15px', fontFamily: 'Arial',
+      color: '#FFFFFF', stroke: '#000000', strokeThickness: 3,
+    }).setDepth(22);
+
+    // Battle log bg
+    const logH = 92;
+    const lgBg = this.add.graphics().setDepth(19);
+    lgBg.fillStyle(0x000000, 0.52);
+    lgBg.fillRect(0, H - logH, W, logH);
+    lgBg.lineStyle(1, 0xFFD700, 0.35);
+    lgBg.lineBetween(0, H - logH, W, H - logH);
+
+    this.logText = this.add.text(10, H - logH + 6, '', {
+      fontSize: '12px', fontFamily: 'Arial',
+      color: '#EEEEEE',
+      stroke: '#000000', strokeThickness: 2,
+      lineSpacing: 3,
+    }).setDepth(22);
+  }
+
+  addLog(msg) {
+    this.logLines.unshift(msg);
+    if (this.logLines.length > 5) this.logLines.length = 5;
+  }
+
+  onFighterDied(fighter, killer) {
+    this.eliminationOrder.push(fighter.letter);
+    const alive = this.fighters.filter(f => !f.dead).length;
+    const kn = killer ? killer.letter : '?';
+    this.addLog(`💀 ${fighter.letter} 被 ${kn} 淘汰！  剩余 ${alive} 人`);
+  }
+
+  update(time, delta) {
+    if (this.gameOver) return;
+
+    // Update fighters
+    for (const f of this.fighters) {
+      if (!f.dead) {
+        f.update(delta, this.fighters, this.platforms, this.effects, this.projectiles, this.audio);
+      }
+    }
+
+    // Effects & projectiles
+    const alive = this.fighters.filter(f => !f.dead);
+    this.effects    = this.effects.filter(e => { e.update(delta); return !e.dead; });
+    this.projectiles = this.projectiles.filter(p => { p.update(delta, alive); return !p.dead; });
+
+    // UI
+    this.aliveText.setText(`存活: ${alive.length} / 26`);
+    this.logText.setText(this.logLines.join('\n'));
+
+    // Win check
+    if (alive.length <= 1 && !this.gameOver) {
+      this.gameOver = true;
+      const winner = alive[0] || null;
+      const winLetter = winner ? winner.letter : this.eliminationOrder[this.eliminationOrder.length - 1];
+      // Build full ranking: winner = 1st, then reversed elimination order
+      const full = [winLetter, ...this.eliminationOrder.slice().reverse()];
+      this.time.delayedCall(1600, () => {
+        this.scene.start('VictoryScene', { full });
+      });
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  VICTORY SCENE  (Olympic podium, top 3)
+// ══════════════════════════════════════════════════════
+class VictoryScene extends Phaser.Scene {
+  constructor() { super('VictoryScene'); }
+
+  create(data) {
+    this.W = this.scale.width;
+    this.H = this.scale.height;
+    const W = this.W, H = this.H;
+    const { full } = data;  // full[0]=1st, full[1]=2nd, full[2]=3rd, ...
+    this.audio = new AudioManager();
+
+    // Background: night stadium
+    const g = this.add.graphics();
+    g.fillGradientStyle(0x08001A, 0x08001A, 0x2A0060, 0x2A0060, 1);
+    g.fillRect(0, 0, W, H);
+
+    // Stars
+    for (let i = 0; i < 120; i++) {
+      const sx = Math.random() * W;
+      const sy = Math.random() * H * 0.55;
+      g.fillStyle(0xFFFFFF, Math.random() * 0.7 + 0.15);
+      g.fillCircle(sx, sy, Math.random() * 1.8 + 0.3);
+    }
+
+    // Spotlights
+    for (let i = 0; i < 3; i++) {
+      const sx = W * (0.25 + i * 0.25);
+      g.fillStyle(0xFFFFAA, 0.04);
+      g.fillTriangle(sx, 0, sx - H * 0.3, H, sx + H * 0.3, H);
+    }
+
+    // Title
+    this.add.text(W / 2, 30, '🏆  比赛结束！', {
+      fontSize: '46px', fontFamily: '"Arial Black", Arial',
+      color: '#FFD700', stroke: '#4A1500', strokeThickness: 7,
+    }).setOrigin(0.5, 0).setDepth(10);
+
+    this.add.text(W / 2, 88, '颁奖典礼', {
+      fontSize: '20px', fontFamily: 'Arial',
+      color: '#DDDDDD', stroke: '#000000', strokeThickness: 3,
+    }).setOrigin(0.5, 0).setDepth(10);
+
+    // Podium geometry
+    const podiumBaseY = H * 0.80;
+    const podW = Math.min(160, W * 0.14);
+    const podSpec = [
+      { rank: 1, letter: full[0], cx: W * 0.50, podH: 140, medal: '🥇', col: 0xFFD700, rankLabel: '冠军' },
+      { rank: 2, letter: full[1], cx: W * 0.30, podH:  90, medal: '🥈', col: 0xC0C0C0, rankLabel: '亚军' },
+      { rank: 3, letter: full[2], cx: W * 0.70, podH:  60, medal: '🥉', col: 0xCD7F32, rankLabel: '季军' },
+    ];
+
+    const pg = this.add.graphics().setDepth(5);
+
+    podSpec.forEach((ps) => {
+      if (!ps.letter) return;
+      const px = ps.cx - podW / 2;
+      const py = podiumBaseY - ps.podH;
+      // Shadow
+      pg.fillStyle(0x000000, 0.35);
+      pg.fillRect(px + 5, py + 5, podW, ps.podH);
+      // Body
+      pg.fillStyle(ps.col, 1);
+      pg.fillRect(px, py, podW, ps.podH);
+      // Top shine
+      pg.fillStyle(0xFFFFFF, 0.22);
+      pg.fillRect(px, py, podW, 12);
+      // Outline
+      pg.lineStyle(2, 0x000000, 0.5);
+      pg.strokeRect(px, py, podW, ps.podH);
+
+      // Rank number on podium face
+      this.add.text(ps.cx, podiumBaseY - ps.podH * 0.5, `${ps.rank}`, {
+        fontSize: '38px', fontFamily: '"Arial Black", Arial',
+        color: '#FFFFFF', stroke: '#00000088', strokeThickness: 4,
+      }).setOrigin(0.5, 0.5).setDepth(7);
+
+      // Character on podium
+      const charY = py - 46;
+      const cg = this.add.graphics().setDepth(8);
+      const cfg = LC[ps.letter];
+      if (cfg) {
+        cg.fillStyle(cfg.color, 1);
+        cg.fillCircle(ps.cx, charY, 36);
+        cg.lineStyle(3, 0xFFFFFF, 0.6);
+        cg.strokeCircle(ps.cx, charY, 36);
+        cg.fillStyle(0xFFFFFF, 1);
+        cg.fillCircle(ps.cx - 10, charY - 8, 6);
+        cg.fillCircle(ps.cx + 10, charY - 8, 6);
+        cg.fillStyle(0x111111, 1);
+        cg.fillCircle(ps.cx - 8, charY - 7, 3.5);
+        cg.fillCircle(ps.cx + 12, charY - 7, 3.5);
+        // Smile (winner)
+        cg.lineStyle(2.5, 0x333333, 1);
+        cg.beginPath();
+        cg.arc(ps.cx, charY + 7, 9, 0, Math.PI);
+        cg.strokePath();
+      }
+
+      // Letter
+      this.add.text(ps.cx, charY + 4, ps.letter, {
+        fontSize: '28px', fontFamily: '"Arial Black", Arial',
+        color: '#FFFFFF', stroke: '#000000', strokeThickness: 4,
+      }).setOrigin(0.5, 0.5).setDepth(9);
+
+      // Medal emoji
+      this.add.text(ps.cx, charY - 58, ps.medal, {
+        fontSize: '28px',
+      }).setOrigin(0.5, 0.5).setDepth(9);
+
+      // Rank label
+      this.add.text(ps.cx, charY - 90, ps.rankLabel, {
+        fontSize: '15px', fontFamily: '"Arial Black", Arial',
+        color: '#' + ps.col.toString(16).padStart(6, '0'),
+        stroke: '#000000', strokeThickness: 3,
+      }).setOrigin(0.5, 0.5).setDepth(9);
+    });
+
+    // Ground under podium
+    pg.fillStyle(0x4A2800, 1);
+    pg.fillRect(0, podiumBaseY, W, H - podiumBaseY);
+    pg.fillStyle(0x8B5E1A, 1);
+    pg.fillRect(0, podiumBaseY, W, 12);
+
+    // Full ranking list (all 26)
+    const listX = W * 0.5;
+    const listY = podiumBaseY + 20;
+    const allStr = full.map((l, i) => `${i + 1}.${l}`).join('  ');
+    this.add.text(listX, listY, '完整排名  ' + allStr, {
+      fontSize: '12px', fontFamily: 'Arial',
+      color: '#CCCCCC', stroke: '#000000', strokeThickness: 2,
+      wordWrap: { width: W - 40, useAdvancedWrap: true },
+      align: 'center',
+    }).setOrigin(0.5, 0).setDepth(12);
+
+    // Restart button
+    const btn = this.add.text(W / 2, H - 36, '  再来一局  ', {
+      fontSize: '22px', fontFamily: '"Arial Black", Arial',
+      color: '#1A0055', backgroundColor: '#FFD700',
+      padding: { x: 24, y: 10 },
+    }).setOrigin(0.5, 0.5).setDepth(20).setInteractive({ useHandCursor: true });
+    btn.on('pointerover', () => btn.setStyle({ color: '#000000', backgroundColor: '#FFFFFF' }));
+    btn.on('pointerout',  () => btn.setStyle({ color: '#1A0055', backgroundColor: '#FFD700' }));
+    btn.on('pointerdown', () => this.scene.start('BattleScene'));
+
+    // Confetti + victory sound
+    this.time.delayedCall(400, () => {
+      this.audio.victory();
+      this.spawnConfetti();
+    });
+  }
+
+  spawnConfetti() {
+    const W = this.W, H = this.H;
+    const colors = [0xFF4444, 0x44FF44, 0x4488FF, 0xFFFF44, 0xFF44FF, 0x44FFFF, 0xFF8800];
+    for (let i = 0; i < 90; i++) {
+      this.time.delayedCall(i * 40, () => {
+        const cx = Math.random() * W;
+        const size = Phaser.Math.Between(5, 10);
+        const col = colors[Math.floor(Math.random() * colors.length)];
+        const r = this.add.rectangle(cx, -10, size, size, col).setDepth(18);
+        this.tweens.add({
+          targets: r,
+          x: cx + Phaser.Math.Between(-120, 120),
+          y: H + 20,
+          angle: Phaser.Math.Between(-360, 360),
+          duration: Phaser.Math.Between(2200, 4500),
+          ease: 'Linear',
+          onComplete: () => r.destroy(),
+        });
+      });
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  GAME INIT
+// ══════════════════════════════════════════════════════
+const game = new Phaser.Game({
+  type: Phaser.AUTO,
+  width: window.innerWidth,
+  height: window.innerHeight,
+  backgroundColor: '#0a0a12',
+  scene: [BattleScene, VictoryScene],
+  scale: {
+    mode: Phaser.Scale.RESIZE,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+  },
+});
+
+window.addEventListener('resize', () => {
+  game.scale.resize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>
